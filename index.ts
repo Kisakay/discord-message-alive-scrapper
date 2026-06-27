@@ -1,12 +1,10 @@
 import { Client, GuildChannel } from "discord.js-selfbot-v13";
-import config from "./config.yaml";
+import config from "./config.ts";
 import "./colors.ts";
 import { SquirrelDB } from 'squirreldb';
 import type { MessageObject } from "./interface.ts";
 import { downloadAvatarInb64, generateBase64ArrayFromAttachment } from "./func.ts";
 
-
-import express from "express";
 import "./server.ts";
 
 // ++++++++++++++++++++++++++++ CLIENT
