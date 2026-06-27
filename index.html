@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualiseur Messages Discord</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: none;
+            width: 100%;
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            border: 1px solid #333333;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        header input[type="text"] {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #444444;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        header input[type="text"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #ffffff;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        header button {
+            padding: 8px 15px;
+            width: auto;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid #333333;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #cccccc;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filters-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+            border: 1px solid #333333;
+            position: sticky;
+            top: 20px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #1a1a1a;
+            border: 1px solid #444444;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 0.95em;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        select option:checked {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        input[type="text"]::placeholder {
+            color: #808080;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #ffffff;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #ffffff;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #e0e0e0;
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            margin-top: 5px;
+        }
+
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border: 1px solid #333333;
+        }
+
+        .message-controls {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            border-bottom: 1px solid #333333;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .sort-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .messages-list {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #ffffff;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+
+        .message-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .message-timestamp {
+            font-size: 0.85em;
+            color: #808080;
+        }
+
+        .message-id {
+            font-size: 0.75em;
+            color: #aaaaaa;
+            font-family: 'Courier New', monospace;
+        }
+
+        .message-content {
+            color: #e0e0e0;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+
+        .message-content a {
+            color: #cccccc;
+            text-decoration: none;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        .attachments {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #333333;
+        }
+
+        .attachment-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .attachment-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            margin-top: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            object-fit: contain;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #808080;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #808080;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .highlight {
+            background: rgba(255, 255, 0, 0.2);
+            color: #ffff00;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        .channel-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            color: #ffffff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: auto;
+            border: 1px solid #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            color: #ffffff;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            width: auto;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="stats" style="margin-top: 20px;">
+                <input type="file" id="fileInput" accept=".json"
+                    style="padding: 8px; border-radius: 5px; border: 1px solid #444444; background: rgba(255, 255, 255, 0.08); color: #ffffff;">
+
+                <div class="stat-item">
+                    <div class="stat-value" id="totalMessages">0</div>
+                    <div class="stat-label">Messages au total</div>
+                </div>
+
+
+                <div class="stat-item">
+                    <div class="stat-value" id="filteredMessages">0</div>
+                    <div class="stat-label">Résultats</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="uniqueChannels">0</div>
+                    <div class="stat-label">Canaux</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="filters-panel">
+                <div class="filter-title">Filtres</div>
+
+                <div class="filter-group">
+                    <label class="filter-title">Contenu</label>
+                    <input type="text" id="searchInput" placeholder="Rechercher...">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-title">Canal</label>
+                    <select id="channelFilter">
+                        <option value="">Tous les canaux</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-title">Dates</label>
+                    <label style="font-size: 0.85em; color: #b0b0b0; margin-bottom: 5px; display: block;">De:</label>
+                    <input type="date" id="dateFrom">
+                    <label style="font-size: 0.85em; color: #b0b0b0; margin-bottom: 5px; display: block;">À:</label>
+                    <input type="date" id="dateTo">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-title">Type</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hasLinks">
+                            <label for="hasLinks">Avec liens</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hasImages">
+                            <label for="hasImages">Avec images</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hasEmotes">
+                            <label for="hasEmotes">Avec emotes</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hasQuotes">
+                            <label for="hasQuotes">Avec citations</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="isEmpty">
+                            <label for="isEmpty">Vides</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-title">Longueur</label>
+                    <select id="lengthFilter">
+                        <option value="">Tous</option>
+                        <option value="short">Court</option>
+                        <option value="medium">Moyen</option>
+                        <option value="long">Long</option>
+                    </select>
+                </div>
+
+                <button onclick="applyFilters()">Appliquer</button>
+                <button class="secondary" onclick="resetFilters()">Réinitialiser</button>
+                <button class="secondary" onclick="exportFiltered()">Exporter</button>
+            </div>
+
+            <div class="messages-section">
+                <div class="message-controls">
+                    <div class="sort-control">
+                        <label for="sortOrder">Trier par:</label>
+                        <select id="sortOrder" style="width: auto; padding: 8px;">
+                            <option value="newest">Récent</option>
+                            <option value="oldest">Ancien</option>
+                            <option value="longest">Long</option>
+                            <option value="shortest">Court</option>
+                        </select>
+                    </div>
+                    <div style="margin-left: auto; color: #b0b0b0;">
+                        <span id="resultsInfo">0 résultats</span>
+                    </div>
+                </div>
+
+                <div class="messages-list" id="messagesList">
+                    <div class="loading">Chargement...</div>
+                </div>
+
+                <div class="pagination">
+                    <button id="prevBtn" onclick="previousPage()" disabled>← Précédent</button>
+                    <span id="pageInfo" style="color: #b0b0b0; align-self: center;"></span>
+                    <button id="nextBtn" onclick="nextPage()" disabled>Suivant →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeImageModal()">&times;</span>
+            <img id="modalImage" style="width: 100%; border-radius: 10px;">
+        </div>
+    </div>
+
+    <script>
+        let allMessages = [];
+        let filteredMessages = [];
+        let currentPage = 1;
+        let currentFileName = '';
+        const messagesPerPage = 10;
+
+        function escapeHtml(s) {
+            return String(s ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+
+        async function loadMessages(filename) {
+            try {
+                let response = await fetch(filename);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                allMessages = await response.json();
+                allMessages = allMessages.map(msg => ({ ...msg, content: msg.content || '' }));
+
+                initializeFilters();
+                applyFilters();
+                updateStats();
+            } catch (error) {
+                console.log('loadMessages: ' + error.message + ' - Utilisez le sélecteur de fichier');
+                allMessages = [];
+                filteredMessages = [];
+            }
+        }
+
+        function loadCustomFile() {
+            const el = document.getElementById('jsonFileInput');
+            if (!el) { alert('Champ jsonFileInput introuvable'); return; }
+            const filename = el.value.trim();
+            if (!filename) {
+                alert('Entrez un nom de fichier');
+                return;
+            }
+            loadMessages(filename);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const fileInput = document.getElementById('fileInput');
+            const sortEl = document.getElementById('sortOrder');
+
+            // 🔁 Tri automatique quand on change le select
+            if (sortEl) {
+                sortEl.addEventListener('change', applyFilters);
+            }
+
+            // 📂 Chargement du fichier JSON
+            if (fileInput) {
+                fileInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            try {
+                                allMessages = JSON.parse(event.target.result);
+                                allMessages = allMessages.map(msg => ({
+                                    ...msg,
+                                    content: msg.content || ''
+                                }));
+
+                                currentFileName = file.name.replace(/\.[^/.]+$/, "");
+
+                                initializeFilters();
+                                applyFilters();
+                                updateStats();
+                            } catch (error) {
+                                alert('Erreur lecture fichier: ' + error.message);
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+            }
+        });
+
+        function sortMessages(list) {
+            const sortOrder = document.getElementById('sortOrder')?.value || 'newest';
+
+            const arr = [...list];
+            arr.sort((a, b) => {
+                const aTime = Date.parse(a.timestamp || 0) || 0;
+                const bTime = Date.parse(b.timestamp || 0) || 0;
+                const aLen = (a.content || '').length;
+                const bLen = (b.content || '').length;
+
+                switch (sortOrder) {
+                    case 'oldest': return aTime - bTime;
+                    case 'longest': return bLen - aLen;
+                    case 'shortest': return aLen - bLen;
+                    default: return bTime - aTime; // newest
+                }
+            });
+            return arr;
+        }
+
+
+        function initializeFilters() {
+            const channelFilter = document.getElementById('channelFilter');
+            if (!channelFilter) return;
+
+            // reset propre
+            channelFilter.innerHTML = '<option value="">Tous les canaux</option>';
+
+            const channels = new Map();
+
+            allMessages.forEach(msg => {
+                if (!channels.has(msg.channel_id)) {
+                    channels.set(msg.channel_id, msg.channel_name || 'inconnu');
+                }
+            });
+
+            for (const [id, name] of channels.entries()) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = name;
+                channelFilter.appendChild(option);
+            }
+        }
+
+        function applyFilters() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const channelId = document.getElementById('channelFilter').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const fromMs = dateFrom ? Date.parse(dateFrom + 'T00:00:00') : null;
+            const toMs = dateTo ? Date.parse(dateTo + 'T23:59:59') : null;
+            const hasLinks = document.getElementById('hasLinks').checked;
+            const hasImages = document.getElementById('hasImages').checked;
+            const hasEmotes = document.getElementById('hasEmotes').checked;
+            const hasQuotes = document.getElementById('hasQuotes').checked;
+            const isEmpty = document.getElementById('isEmpty').checked;
+            const lengthFilter = document.getElementById('lengthFilter').value;
+
+            filteredMessages = allMessages.filter(msg => {
+                if (searchText && !msg.content.toLowerCase().includes(searchText)) return false;
+                if (channelId && msg.channel_id !== channelId) return false;
+                const tsMs = Date.parse(msg.timestamp || 0) || 0;
+                if (fromMs !== null && tsMs < fromMs) return false;
+                if (toMs !== null && tsMs > toMs) return false;
+                if (hasLinks && !msg.content.includes('http')) return false;
+                if (hasImages && !msg.attachments?.length) return false;
+                if (hasEmotes && !msg.content.includes('<:')) return false;
+                if (hasQuotes && !msg.content.includes('>')) return false;
+                if (isEmpty && msg.content.trim().length > 0) return false;
+
+                if (lengthFilter === 'short' && msg.content.length > 100) return false;
+                if (lengthFilter === 'medium' && (msg.content.length <= 100 || msg.content.length > 500)) return false;
+                if (lengthFilter === 'long' && msg.content.length <= 500) return false;
+
+                return true;
+            });
+            filteredMessages = sortMessages(filteredMessages); // ✅ AJOUT DU TRI ICI
+            currentPage = 1;
+            displayPage();
+            updateStats();
+        }
+
+        function displayPage() {
+            const start = (currentPage - 1) * messagesPerPage;
+            const end = start + messagesPerPage;
+            const pageMessages = filteredMessages.slice(start, end);
+
+            let html = '';
+            pageMessages.forEach(msg => {
+                html += createMessageElement(msg);
+            });
+
+            document.getElementById('messagesList').innerHTML = html || '<div class="no-results">Aucun message</div>';
+            document.getElementById('resultsInfo').textContent = `${filteredMessages.length} résultats`;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} / ${Math.ceil(filteredMessages.length / messagesPerPage)}`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage >= Math.ceil(filteredMessages.length / messagesPerPage);
+        }
+
+        function createMessageElement(msg) {
+            const guild = `<span class="channel-badge">${msg.guild_name || 'inconnu'}</span>`;
+            const channel = `<span class="channel-badge">${msg.channel_name || 'inconnu'}</span>`;
+            const author = `<span class="channel-badge">${currentFileName || 'inconnu'}</span>`;
+            const timestamp = new Date(msg.timestamp).toLocaleString('fr-FR');
+            const safeContent = escapeHtml(msg.content || '(vide)');
+
+            let attachments = '';
+            if (msg.attachments?.length) {
+                attachments = '<div class="attachments">';
+                msg.attachments.forEach(att => {
+                    const ext = att.filename?.split('.').pop() || 'fichier';
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                        attachments += `<img src="${att.url}" class="image-preview" onclick="openImageModal('${att.url}')">`;
+                    }
+                });
+                attachments += '</div>';
+            }
+
+            return `
+                <div class="message-item">
+                    <div class="message-header">
+                        <div>${guild} ${channel} ${author}</div>
+                        <div>
+                            <span class="message-timestamp">${timestamp}</span>
+                            <span class="message-id">${msg.id || ''}</span>
+                        </div>
+                    </div>
+                    <div class="message-content">${safeContent}</div>
+                    ${attachments}
+                </div>
+            `;
+        }
+
+        function openImageModal(url) {
+            document.getElementById('modalImage').src = url;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('channelFilter').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('hasLinks').checked = false;
+            document.getElementById('hasImages').checked = false;
+            document.getElementById('hasEmotes').checked = false;
+            document.getElementById('hasQuotes').checked = false;
+            document.getElementById('isEmpty').checked = false;
+            document.getElementById('lengthFilter').value = '';
+            applyFilters();
+        }
+
+        function exportFiltered() {
+            const json = JSON.stringify(filteredMessages, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'messages_filtres.json';
+            a.click();
+        }
+
+        function nextPage() {
+            if (currentPage < Math.ceil(filteredMessages.length / messagesPerPage)) {
+                currentPage++;
+                displayPage();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayPage();
+            }
+        }
+
+        function updateStats() {
+            const totalEl = document.getElementById('totalMessages');
+            const filteredEl = document.getElementById('filteredMessages');
+            const channelsEl = document.getElementById('uniqueChannels');
+            if (totalEl) totalEl.textContent = allMessages.length;
+            if (filteredEl) filteredEl.textContent = filteredMessages.length;
+            const channels = new Set(allMessages.map(m => m.channel_id).filter(Boolean));
+            if (channelsEl) channelsEl.textContent = channels.size;
+        }
+    </script>
+</body>
+
+</html>
