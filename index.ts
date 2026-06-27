@@ -56,7 +56,7 @@ client.on("messageCreate", async (message) => {
         await db.add('messages', {
             id: message.id,
             /**
-             *         ['guild_id', "string"],
+        ['guild_id', "string"],
         ['channel_id', 'string'],
         ['metadatas', "json"]
 
